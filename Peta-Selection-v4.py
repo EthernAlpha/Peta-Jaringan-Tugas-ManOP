@@ -103,9 +103,6 @@ def create_indonesia_map(df, selected_id_station=str('AWS Ujung Kulon')):
     
     return m
 
-import folium
-import pandas as pd
-
 def create_selective_map(df, selected_station_type='AAWS', selected_id_station='10001'):
     """Create an interactive map centered on Indonesia showing stations of the selected type and highlighting the selected station."""
 
@@ -267,8 +264,6 @@ def main():
         selected_id_station = selected_site_display.split(" - ")[0]
         selected_site_row = filtered_df[filtered_df["id_station_str"] == selected_id_station]
 
-        st.subheader(f"📍 Site Details: {selected_site_display}")
-        st.dataframe(selected_site_row)
     else:
         st.sidebar.warning("No sites available for the selected station type.")
         st.info("Please select a different station type.")
@@ -339,9 +334,9 @@ def main():
         # Map legend
         st.markdown("""
         **Map Legend:**
-        - 🔴 **Red Star**: Currently selected site for detailed analysis
-        - 🔵 **Blue Markers**: Other microclimate monitoring sites
-        - Click on markers for detailed site information
+        - 🔴 **Red Star**: Currently selected station for detailed analysis
+        - 🔵 **Blue Markers**: Other monitoring station
+        - Click on markers for detailed Station information
         """)
 
         image_path = f"Layout {selected_type} Tes.png"
@@ -369,7 +364,7 @@ def main():
         # Summary statistics
         st.subheader("📊 Network Summary")
         
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         
         with col1:
             st.info(f"""
@@ -386,14 +381,6 @@ def main():
             - **Provinces:** {df['nama_propinsi'].nunique()}
             - **Districts:** {df['nama_kota'].nunique()}
             - **Sub-districts:** {df['kecamatan'].nunique()}
-            """)
-        
-        with col3:
-            equipment_info = df['nama_vendor'].value_counts()
-            equipment_text = "\n".join([f"- **{brand}:** {count}" for brand, count in equipment_info.head(5).items()])
-            st.info(f"""
-            **Equipment Brands:**
-            {equipment_text}
             """)
     
     with tab3:
@@ -487,14 +474,5 @@ def main():
             **Address:**
             {selected_site['addr_instansi'] if pd.notna(selected_site['addr_instansi']) else 'N/A'}
             """)
-        
-        # Link to detailed analysis
-        st.markdown("---")
-        st.info(f"""
-        💡 **Ready to analyze data from {selected_site['name_station']}?**
-        
-        If you have microclimate data for this site, you can use the main dashboard to visualize and analyze the measurements.
-        The current dashboard is configured for Site ID {selected_id_station}.
-        """)
 
 main()
