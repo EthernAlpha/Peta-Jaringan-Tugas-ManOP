@@ -339,7 +339,7 @@ def main():
         - Click on markers for detailed Station information
         """)
 
-        image_path = f"Layout {selected_type} Tes.png"
+        image_path = f"Layout {selected_type}.png"
         if os.path.exists(image_path):
             with open(image_path, "rb") as f:
                 image_data = f.read()
