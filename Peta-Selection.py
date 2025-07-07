@@ -169,14 +169,14 @@ def create_selective_map(df, selected_station_type='AAWS', selected_id_station='
     return m
     
 def create_province_distribution_chart(df):
-    """Create bar chart showing site distribution by province"""
+    """Create bar chart showing Station distribution by province"""
     province_counts = df['nama_propinsi'].value_counts()
     
     fig = px.bar(
         x=province_counts.values,
         y=province_counts.index,
         orientation='h',
-        title="Microclimate Sites Distribution by Province",
+        title="Stations Distribution by Province",
         labels={'x': 'Number of Sites', 'y': 'Province'},
         color=province_counts.values,
         color_continuous_scale='viridis'
@@ -269,11 +269,11 @@ def main():
         st.info("Please select a different station type.")
     
     # Main content tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Interactive Map", "📊 Statistics", "📋 Site Directory", "🎯 Selected Site"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Interactive Map", "📊 Statistics", "📋 Station Directory", "🎯 Selected Site"])
     
     with tab1:
         st.subheader("🌍 Indonesia Observation Sites Map")
-        
+
         col1, col2, col3 = st.columns(3)
         with col1:
             st.metric("Total Sites", len(df))
@@ -283,74 +283,69 @@ def main():
             earliest_date = df['tgl_pasang'].min()
             formatted_date = earliest_date.strftime('%d/%m/%Y') if pd.notna(earliest_date) else "N/A"
             st.metric("Active Since", formatted_date)
-        
-        selected_type = selected_type  # from your radio button
-        selected_id = st.session_state.selected_id_station  # from session
 
-        # Use cached map
+        selected_type = selected_type
+        selected_id = st.session_state.selected_id_station
+  
+        # Create interactive map
         map_obj = create_selective_map(
-        df=df,
-        selected_station_type=selected_type,
-        selected_id_station=selected_id_station
+            df=df,
+            selected_station_type=selected_type,
+            selected_id_station=selected_id
         )
-        
-        map_data = st_folium(map_obj, width=1200, height=600)
-        
-        # --- Initialize clicked variables ---
-        clicked_station = None
-        clicked_lat = None
-        clicked_lon = None
 
-        # --- Handle map click ---
+        # Show map first
+        map_data = st_folium(map_obj, width=1200, height=600)
+
+        # Handle map click
+        clicked_station = None
         if map_data:
             last_clicked = map_data.get("last_object_clicked")
-
             if last_clicked and "lat" in last_clicked and "lng" in last_clicked:
                 clicked_lat = last_clicked["lat"]
                 clicked_lon = last_clicked["lng"]
 
-                # ✅ Find the nearest station only when click is valid
                 clicked_station = df.loc[
                     ((df['latt_station'] - clicked_lat) ** 2 + (df['long_station'] - clicked_lon) ** 2).idxmin()
                 ]
 
-        # --- Display info if station was clicked ---
-        if clicked_station is not None:
-            st.info(f"📍 You clicked: **{clicked_station['name_station']}** (ID: {clicked_station['id_station']})")
+        # Show clicked info and selection button BETWEEN the map and image
+        with st.container():
+            if clicked_station is not None:
+                st.info(f"📍 You clicked: **{clicked_station['name_station']}** (ID: {clicked_station['id_station']})")
+                if st.button("🔄 Use this station in selection"):
+                    st.session_state.selected_id_station = str(clicked_station['id_station'])
+                    st.rerun()
+            else:
+                st.info("🖱️ Click a station marker on the map to select it.")
 
-            if st.button("🔄 Use this station in selection"):
-                st.session_state.selected_id_station = str(clicked_station['id_station'])
-                st.rerun()
-        else:
-            st.info("🖱️ Click a station marker on the map to select it.")
-
-        # Build filename dynamically
-        image_filename = f"Layout {selected_type}.png"
-
-        # Check if the file exists before trying to load it
-        if os.path.isfile(image_filename):
-            st.image(image_filename, caption=f"Peta Statik Jaringan Peralatan: {image_filename}", width=1200)
-        else:
-            st.warning(f"Image not found: {image_filename}")
-        
-        # Map legend
+        # Legend
         st.markdown("""
         **Map Legend:**
-        - 🔴 **Red Star**: Currently selected station for detailed analysis
-        - 🔵 **Blue Markers**: Other monitoring station
+        - 🔴 **Red Star**: Currently selected station for detailed analysis  
+        - 🔵 **Blue Markers**: Other monitoring station  
         - Click on markers for detailed Station information
         """)
 
-        image_path = f"Layout {selected_type}.png"
-        if os.path.exists(image_path):
-            with open(image_path, "rb") as f:
-                image_data = f.read()
-            st.download_button(
-                label="📥 Download Image (PNG)",
-                data=image_data,
-                file_name=f"{selected_type}_layout_{pd.Timestamp.now().strftime('%Y%m%d')}.png",
-                mime="image/png"
-            )
+        # Show static image map after interaction
+        with st.container():
+            image_filename = f"Layout {selected_type}.png"
+            if os.path.isfile(image_filename):
+                img = Image.open(image_filename)
+                img = img.resize((1200, int(img.height * 1200 / img.width)))
+                st.image(img, caption="Static Layout Map")
+
+                with open(image_filename, "rb") as f:
+                    image_data = f.read()
+                st.download_button(
+                    label="📥 Download Image (PNG)",
+                    data=image_data,
+                    file_name=f"{selected_type}_layout_{pd.Timestamp.now().strftime('%Y%m%d')}.png",
+                    mime="image/png"
+                )
+            else:
+                st.warning(f"Image not found: {image_filename}")
+
     
     with tab2:
         st.subheader("📈 Network Statistics")
@@ -386,10 +381,10 @@ def main():
             """)
     
     with tab3:
-        st.subheader("📋 Complete Site Directory")
+        st.subheader("📋 Complete Station Directory")
         
         # Search functionality
-        search_term = st.text_input("🔍 Search sites by name or location:")
+        search_term = st.text_input("🔍 Search station by name or location:")
         
         if search_term:
             search_df = df[
