@@ -280,7 +280,9 @@ def main():
         with col2:
             st.metric("Provinces Covered", df['nama_propinsi'].nunique())
         with col3:
-            st.metric("Active Since", str(df['tgl_pasang'].min()) if df['tgl_pasang'].notna().any() else "N/A")
+            earliest_date = df['tgl_pasang'].min()
+            formatted_date = earliest_date.strftime('%d/%m/%Y') if pd.notna(earliest_date) else "N/A"
+            st.metric("Active Since", formatted_date)
         
         selected_type = selected_type  # from your radio button
         selected_id = st.session_state.selected_id_station  # from session
