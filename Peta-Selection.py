@@ -333,7 +333,7 @@ def main():
         with st.container():
             map_data = st_folium(map_obj, use_container_width=True, height=500)
 
-        st.markdown("<style>.element-container:has(.folium-map) + .element-container { margin-top: -50px; }</style>", unsafe_allow_html=True)
+        st.markdown("---")
         
         # Handle map click
         clicked_station = None
