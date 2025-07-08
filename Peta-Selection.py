@@ -8,6 +8,14 @@ import plotly.graph_objects as go
 from folium.plugins import MarkerCluster
 from PIL import Image
 import os
+import colorsys
+import matplotlib.colors as mcolors
+from scipy.spatial import KDTree
+from folium.plugins import MarkerCluster
+from folium.features import DivIcon
+from sklearn.preprocessing import MinMaxScaler
+import random
+
 
 # --- CONFIGURATION ---
 st.set_page_config(
@@ -43,64 +51,64 @@ def load_site_metadata():
         st.error(f"Error loading site metadata: {str(e)}")
         return None
 
-def create_indonesia_map(df, selected_id_station=str('AWS Ujung Kulon')):
-    """Create interactive map of Indonesia with all observation sites"""
-    
-    # Center map on Indonesia
+def create_clustered_map(df, selected_station_type='AAWS'):
+    """Create a clustered map with individual markers color-coded by province using unique hex colors."""
+
+    # --- Base map setup ---
     center_lat = -2.5
     center_lon = 129.0
-    
-    # Create base map
-    m = folium.Map(
-        location=[center_lat, center_lon],
-        zoom_start=4.2,
-        tiles='OpenStreetMap'
-    )
-    
-    # Add different tile layers
-    folium.TileLayer(
-        tiles='CartoDB positron',
-        attr='© OpenStreetMap contributors © CARTO'
-    ).add_to(m)
-    
-    # Add markers for each site
-    for idx, site in df.iterrows():
-        # Determine marker color and size
-        if (site['id_station']) == selected_id_station:
-            color = 'red'
-            icon = 'star'
-            size = 15
-        else:
-            color = 'blue'
-            icon = 'info-sign'
-            size = 10
-        
-        # Create popup content
-        popup_content = f"""
-        <div style="width: 300px;">
-            <h4>{site['name_station']}</h4>
-            <hr>
-            <b>Site ID:</b> {site['id_station']}<br>
-            <b>Province:</b> {site['nama_propinsi']}<br>
-            <b>District:</b> {site['nama_kota']}<br>
-            <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
-            <b>Installation Year:</b> {site['tgl_pasang'] if pd.notna(site['tgl_pasang']) else 'N/A'}<br>
-            <b>Equipment:</b> {site['nama_vendor'] if pd.notna(site['nama_vendor']) else 'N/A'}<br>
-            <b>Address:</b> {site['addr_instansi'] if pd.notna(site['addr_instansi']) else 'N/A'}
-        </div>
-        """
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=4.2, tiles=None)
+    folium.TileLayer('OpenStreetMap').add_to(m)
+    folium.TileLayer('CartoDB positron').add_to(m)
 
-        # Add marker
-        folium.Marker(
-            location=[site['latt_station'], site['long_station']],
-            popup=folium.Popup(popup_content, max_width=350),
-            tooltip=f"{site['name_station']} (ID: {site['id_station']})",
-            icon=folium.Icon(color=color, icon=icon, prefix='glyphicon')
-        ).add_to(m)
-    
-    # Add layer control
-    folium.LayerControl().add_to(m)
-    
+    # --- Filter by selected station type ---
+    filtered_df = df[df['JENIS'] == selected_station_type].copy()
+
+    # --- Assign unique hex colors per province ---
+    provinces = sorted(filtered_df['nama_propinsi'].dropna().unique())
+    hex_palette = px.colors.qualitative.Alphabet
+    color_pool = hex_palette * ((len(provinces) // len(hex_palette)) + 1)
+    province_hex = {
+        province: color_pool[i]
+        for i, province in enumerate(provinces)
+    }
+
+    # --- Group by province and add clustered markers ---
+    grouped = filtered_df.groupby('nama_propinsi')
+
+    for province, group in grouped:
+        color = province_hex[province]
+        cluster_group = folium.FeatureGroup(name=province)
+        cluster = MarkerCluster().add_to(cluster_group)
+
+        for _, site in group.iterrows():
+            popup_content = f"""
+            <div style="width: 300px;">
+                <h4>{site['name_station']}</h4>
+                <hr>
+                <b>Site ID:</b> {site['id_station']}<br>
+                <b>Province:</b> {site['nama_propinsi']}<br>
+                <b>District:</b> {site['nama_kota']}<br>
+                <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
+                <b>Installation Year:</b> {site['tgl_pasang'] if pd.notna(site['tgl_pasang']) else 'N/A'}<br>
+                <b>Equipment:</b> {site['nama_vendor'] if pd.notna(site['nama_vendor']) else 'N/A'}<br>
+                <b>Address:</b> {site['addr_instansi'] if pd.notna(site['addr_instansi']) else 'N/A'}
+            </div>
+            """
+            folium.CircleMarker(
+                location=[site['latt_station'], site['long_station']],
+                radius=6,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.9,
+                popup=folium.Popup(popup_content, max_width=350),
+                tooltip=f"{site['name_station']} (ID: {site['id_station']})"
+            ).add_to(cluster)
+
+        cluster_group.add_to(m)
+
+    folium.LayerControl(collapsed=True).add_to(m)
     return m
 
 def create_selective_map(df, selected_station_type='AAWS', selected_id_station='10001'):
@@ -206,6 +214,11 @@ def create_equipment_distribution_chart(df):
     
     return fig
 
+@st.cache_data
+def get_filtered_data(df, station_type):
+    """Return filtered site data by station type."""
+    return df[df["JENIS"] == station_type].copy()
+
 def main():
     st.title("🗺️ Indonesia Observation Network")
     st.markdown("---")
@@ -220,6 +233,23 @@ def main():
     if "selected_id_station" not in st.session_state:
         st.session_state.selected_id_station = "10001"  # default site ID as string
 
+    # --- Sidebar: Station Type Summary with Icons ---
+    st.sidebar.markdown("### 📊 Station Type Summary")
+
+    # Icon mapping based on context
+    type_icons = {
+        "AAWS": "🌾",   # Agroclimate
+        "AWS": "🌦️",   # Weather
+        "ARG": "🌧️",   # Rain Gauge
+        "ASRS": "☀️",   # Solar Radiation
+        "IKRO": "🌱"    # Micro Climate
+    }
+
+    type_counts = df['JENIS'].value_counts().sort_index()
+
+    for station_type, count in type_counts.items():
+        icon = type_icons.get(station_type, "📡")
+        st.sidebar.write(f"{icon} **{station_type}**: {count} sites")
     
     # --- Sidebar: Filter Controls ---
     st.sidebar.header("🧭 Station Filtering")
@@ -229,7 +259,7 @@ def main():
     selected_type = st.sidebar.radio("Select Station Type", station_types)
 
     # Filter sites based on selected station type
-    filtered_df = df[df["JENIS"] == selected_type].copy()
+    filtered_df = get_filtered_data(df, selected_type)
 
     # Build display names for dropdown
     filtered_df["id_station_str"] = filtered_df["id_station"].astype(str)
@@ -269,7 +299,7 @@ def main():
         st.info("Please select a different station type.")
     
     # Main content tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Interactive Map", "📊 Statistics", "📋 Station Directory", "🎯 Selected Site"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🗺️ Interactive Map", "🎯 Static Map", "📊 Statistics", "📋 Station Directory"])
     
     with tab1:
         st.subheader("🌍 Indonesia Observation Sites Map")
@@ -284,19 +314,25 @@ def main():
             formatted_date = earliest_date.strftime('%d/%m/%Y') if pd.notna(earliest_date) else "N/A"
             st.metric("Active Since", formatted_date)
 
-        selected_type = selected_type
         selected_id = st.session_state.selected_id_station
-  
-        # Create interactive map
-        map_obj = create_selective_map(
-            df=df,
-            selected_station_type=selected_type,
-            selected_id_station=selected_id
-        )
+        
+        view_mode = st.radio("🗺️ Map Mode", ["Individual Markers", "Clustered Markers"], horizontal=True)
 
-        # Show map first
-        map_data = st_folium(map_obj, width=1200, height=600)
+        if view_mode == "Individual Markers":
+            map_obj = create_selective_map(
+                df=df,
+                selected_station_type=selected_type,
+                selected_id_station=selected_id
+            )
+        else:
+            map_obj = create_clustered_map(
+                df=df,
+                selected_station_type=selected_type
+            )
 
+        with st.container():
+            map_data = st_folium(map_obj, width=1200, height=600)
+        
         # Handle map click
         clicked_station = None
         if map_data:
@@ -317,8 +353,8 @@ def main():
                     st.session_state.selected_id_station = str(clicked_station['id_station'])
                     st.rerun()
             else:
-                st.info("🖱️ Click a station marker on the map to select it.")
-
+                st.info("🖱️ Click a station marker on the map to select it to enable selection.")
+        
         # Legend
         st.markdown("""
         **Map Legend:**
@@ -327,6 +363,49 @@ def main():
         - Click on markers for detailed Station information
         """)
 
+        # Get selected site details
+        selected_site = df[df['id_station'] == selected_id_station].iloc[0]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown(f"""
+            ### 📍 {selected_site['name_station']}
+            
+            **Basic Information:**
+            - **Station ID:** {selected_site['id_station']}
+            - **Station Name:** {selected_site['name_station']}
+            - **Data Transport Type:** {selected_site['data_transport'] if pd.notna(selected_site['data_transport']) else 'N/A'} 
+            
+            **Location:**
+            - **Province:** {selected_site['nama_propinsi']}
+            - **District:** {selected_site['nama_kota']}
+            - **Sub-district:** {selected_site['kecamatan']}
+            - **Village:** {selected_site['kelurahan']}
+            """)
+        
+        with col2:
+            st.markdown(f"""
+            ### 🌍 Geographic Details
+            
+            **Coordinates:**
+            - **Latitude:** {selected_site['latt_station']:}°
+            - **Longitude:** {selected_site['long_station']:}°
+            - **Elevation:** {selected_site['elv_station']} m
+            
+            **Administrative:**
+            - **Agency:** {selected_site['instansi'] if pd.notna(selected_site['instansi']) else ''}
+            - **Procurement Date:** {selected_site['tgl_pasang'].strftime("%m/%d/%Y")}
+            - **Vendor:** {selected_site['nama_vendor']}            
+            - **Officer Phone Number:** {selected_site['hp_petugas']}   
+            
+            **Address:**
+            {selected_site['addr_instansi'] if pd.notna(selected_site['addr_instansi']) else 'N/A'}
+            """)
+
+    with tab2:
+        st.subheader(f"🎯 Specific Station Type Details")
+        
         # Show static image map after interaction
         with st.container():
             image_filename = f"Layout {selected_type}.png"
@@ -346,8 +425,7 @@ def main():
             else:
                 st.warning(f"Image not found: {image_filename}")
 
-    
-    with tab2:
+    with tab3:
         st.subheader("📈 Network Statistics")
         
         col1, col2 = st.columns(2)
@@ -380,7 +458,7 @@ def main():
             - **Sub-districts:** {df['kecamatan'].nunique()}
             """)
     
-    with tab3:
+    with tab4:
         st.subheader("📋 Complete Station Directory")
         
         # Search functionality
@@ -428,48 +506,5 @@ def main():
                     file_name=f"microclimate_sites_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
                     mime="text/csv"
                 )
-    
-    with tab4:
-        st.subheader(f"🎯 Selected Site Details")
-        
-        # Get selected site details
-        selected_site = df[df['id_station'] == selected_id_station].iloc[0]
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown(f"""
-            ### 📍 {selected_site['name_station']}
-            
-            **Basic Information:**
-            - **Station ID:** {selected_site['id_station']}
-            - **Station Name:** {selected_site['name_station']}
-            - **Data Transport Type:** {selected_site['data_transport'] if pd.notna(selected_site['data_transport']) else 'N/A'} 
-            
-            **Location:**
-            - **Province:** {selected_site['nama_propinsi']}
-            - **District:** {selected_site['nama_kota']}
-            - **Sub-district:** {selected_site['kecamatan']}
-            - **Village:** {selected_site['kelurahan']}
-            """)
-        
-        with col2:
-            st.markdown(f"""
-            ### 🌍 Geographic Details
-            
-            **Coordinates:**
-            - **Latitude:** {selected_site['latt_station']:}°
-            - **Longitude:** {selected_site['long_station']:}°
-            - **Elevation:** {selected_site['elv_station']} m
-            
-            **Administrative:**
-            - **Agency:** {selected_site['instansi'] if pd.notna(selected_site['instansi']) else ''}
-            - **Procurement Date:** {selected_site['tgl_pasang'].strftime("%m/%d/%Y")}
-            - **Vendor:** {selected_site['nama_vendor']}            
-            - **Officer Phone Number:** {selected_site['hp_petugas']}   
-            
-            **Address:**
-            {selected_site['addr_instansi'] if pd.notna(selected_site['addr_instansi']) else 'N/A'}
-            """)
 
 main()
