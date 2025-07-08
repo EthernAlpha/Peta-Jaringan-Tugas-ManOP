@@ -331,7 +331,7 @@ def main():
             )
 
         with st.container():
-            map_data = st_folium(map_obj, width=1200, height=600)
+            map_data = st_folium(map_obj, use_container_width=True, height=500)
         
         # Handle map click
         clicked_station = None
