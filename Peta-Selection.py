@@ -81,12 +81,6 @@ def create_clustered_map(df, selected_station_type='AAWS'):
         cluster_group = folium.FeatureGroup(name=province)
         cluster = MarkerCluster().add_to(cluster_group)
 
-        # Handle possible missing date or address
-        if pd.notna(site.get('tgl_pasang')) and hasattr(site['tgl_pasang'], 'strftime'):
-            install_date = site['tgl_pasang'].strftime("%m/%d/%Y")
-        else:
-            install_date = 'N/A'
-
         for _, site in group.iterrows():
             popup_content = f"""
             <div style="width: 300px;">
@@ -96,7 +90,7 @@ def create_clustered_map(df, selected_station_type='AAWS'):
                 <b>Province:</b> {site['nama_propinsi']}<br>
                 <b>District:</b> {site['nama_kota']}<br>
                 <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
-                <b>Installation Year:</b> {install_date}<br>
+                <b>Installation Year:</b> {site['tgl_pasang'].strftime("%m/%d/%Y") if pd.notna(site['tgl_pasang']) else 'N/A'}<br>
                 <b>Equipment:</b> {site['nama_vendor'] if pd.notna(site['nama_vendor']) else 'N/A'}<br>
                 <b>Address:</b> {site['addr_instansi'] if pd.notna(site['addr_instansi']) else 'N/A'}
             </div>
