@@ -339,7 +339,7 @@ def main():
         with st.container():
             map_data = st_folium(map_obj, use_container_width=True, height=500)
 
-        st.markdown("<style>.element-container:has(.folium-map) + .element-container { margin-top: -50px; }</style>", unsafe_allow_html=True)
+        st.markdown("---")
         
         # Handle map click
         clicked_station = None
@@ -412,7 +412,7 @@ def main():
             """)
 
     with tab2:
-        st.subheader(f"🎯 Specific Station Type Details")
+        st.subheader(f"🎯 Static Map for Selected Station Type")
         
         # Show static image map after interaction
         with st.container():
@@ -420,7 +420,7 @@ def main():
             if os.path.isfile(image_filename):
                 img = Image.open(image_filename)
                 img = img.resize((1200, int(img.height * 1200 / img.width)))
-                st.image(img, caption="Static Layout Map")
+                st.image(img, caption="Static Map")
 
                 with open(image_filename, "rb") as f:
                     image_data = f.read()
