@@ -11,7 +11,6 @@ import os
 import colorsys
 import matplotlib.colors as mcolors
 from scipy.spatial import KDTree
-from folium.plugins import MarkerCluster
 from folium.features import DivIcon
 from sklearn.preprocessing import MinMaxScaler
 import random
