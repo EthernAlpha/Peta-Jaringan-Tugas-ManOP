@@ -14,6 +14,7 @@ from scipy.spatial import KDTree
 from folium.features import DivIcon
 from sklearn.preprocessing import MinMaxScaler
 import random
+import io
 
 
 # --- CONFIGURATION ---
@@ -159,6 +160,7 @@ def create_selective_map(df, selected_station_type='AAWS', selected_id_station='
             <b>Province:</b> {site.get('nama_propinsi', 'N/A')}<br>
             <b>District:</b> {site.get('nama_kota', 'N/A')}<br>
             <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
+            <b>Elevation:</b> {site['elv_station']:.3f} m <br>
             <b>Installation Year:</b> {install_date}<br>
             <b>Equipment:</b> {site.get('nama_vendor', 'N/A')}<br>
             <b>Address:</b> {site.get('addr_instansi', 'N/A')}
@@ -490,24 +492,39 @@ def main():
                 'nama_kota': 'District',
                 'latt_station': st.column_config.NumberColumn('Latitude', format="%.3f"),
                 'long_station': st.column_config.NumberColumn('Longitude', format="%.3f"),
-                'elv_station': 'Ketinggian',
+                'elv_station': 'Ketinggian (m)',
                 'tgl_pasang_str': 'Installation Year',
                 'nama_vendor': 'Equipment Brand'
             }
         )
         
-        # Export functionality
+    # Export functionality
+    with st.expander("📥 Download Site Data"):
+        st.write("Choose your preferred export format:")
 
         col1, col2 = st.columns(2)
-        
-        with col1:
-            if st.button("📥 Download Site Data"):
-                csv = search_df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"microclimate_sites_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-                    mime="text/csv"
-                )
 
+        with col1:
+            # CSV export
+            csv = search_df.to_csv(index=False)
+            st.download_button(
+                label="⬇️ Download CSV",
+                data=csv,
+                file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+
+        with col2:
+            # XLSX export
+            xls_buffer = io.BytesIO()
+            with pd.ExcelWriter(xls_buffer, engine='xlsxwriter') as writer:
+                search_df.to_excel(writer, index=False, sheet_name='Sites')
+            xls_buffer.seek(0)
+
+            st.download_button(
+                label="⬇️ Download XLSX",
+                data=xls_buffer,
+                file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 main()
