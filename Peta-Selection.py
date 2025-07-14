@@ -489,7 +489,7 @@ def main():
                 'nama_kota': 'District',
                 'latt_station': st.column_config.NumberColumn('Latitude', format="%.3f"),
                 'long_station': st.column_config.NumberColumn('Longitude', format="%.3f"),
-                'elv_station': 'Ketinggian'
+                'elv_station': 'Ketinggian',
                 'tgl_pasang_str': 'Installation Year',
                 'nama_vendor': 'Equipment Brand'
             }
