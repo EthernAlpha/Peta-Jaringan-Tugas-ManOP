@@ -478,7 +478,7 @@ def main():
         search_df['tgl_pasang_str'] = search_df['tgl_pasang'].dt.strftime('%d/%m/%Y')
         
         # Display sites table
-        display_columns = ['id_station', 'name_station', 'nama_propinsi', 'nama_kota', 'latt_station', 'long_station', 'tgl_pasang_str', 'nama_vendor']
+        display_columns = ['id_station', 'name_station', 'nama_propinsi', 'nama_kota', 'latt_station', 'long_station', 'elv_station', 'tgl_pasang_str', 'nama_vendor']
         st.dataframe(
             search_df[display_columns].sort_values('id_station'),
             use_container_width=True,
@@ -489,6 +489,7 @@ def main():
                 'nama_kota': 'District',
                 'latt_station': st.column_config.NumberColumn('Latitude', format="%.3f"),
                 'long_station': st.column_config.NumberColumn('Longitude', format="%.3f"),
+                'elv_station': 'Ketinggian'
                 'tgl_pasang_str': 'Installation Year',
                 'nama_vendor': 'Equipment Brand'
             }
