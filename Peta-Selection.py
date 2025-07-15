@@ -211,7 +211,7 @@ def create_equipment_distribution_chart(df):
     fig = px.pie(
         values=brand_counts.values,
         names=brand_counts.index,
-        title="Equipment Brand Distribution",
+        title="Vendor Distribution",
         color_discrete_sequence=px.colors.qualitative.Set3
     )
     
@@ -506,7 +506,7 @@ def main():
                 'hp_petugas': 'No HP',
                 'instansi': 'Instansi',
                 'tgl_pasang_str': 'Installation Date',
-                'nama_vendor': 'Equipment Brand'
+                'nama_vendor': 'Vendor Name'
             }
         )
         
