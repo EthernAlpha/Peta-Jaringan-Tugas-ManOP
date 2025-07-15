@@ -515,16 +515,30 @@ def main():
                 )
 
             with col2:
-                # XLSX export
-                xls_buffer = io.BytesIO()
-                with pd.ExcelWriter(xls_buffer, engine='xlsxwriter') as writer:
-                    search_df.to_excel(writer, index=False, sheet_name='Sites')
-                xls_buffer.seek(0)
+                # XLSX export that retains original sheet structure
+                try:
+                    # Load original Excel file with all sheets
+                    original_xls = pd.read_excel('Metadata ALL - Sheet.xlsx', sheet_name=None)
 
-                st.download_button(
-                    label="⬇️ Download XLSX",
-                    data=xls_buffer,
-                    file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                    # Optionally replace one sheet with filtered data
+                    # This assumes 'AAWS' corresponds to search_df, adjust key if needed
+                    original_xls['AAWS'] = search_df
+
+                    # Write all sheets into buffer
+                    xls_buffer = io.BytesIO()
+                    with pd.ExcelWriter(xls_buffer, engine='openpyxl') as writer:
+                        for sheet_name, df_sheet in original_xls.items():
+                            df_sheet.to_excel(writer, index=False, sheet_name=sheet_name)
+
+                    xls_buffer.seek(0)
+
+                    st.download_button(
+                        label="⬇️ Download XLSX",
+                        data=xls_buffer,
+                        file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                except Exception as e:
+                    st.error(f"❌ Failed to generate Excel file: {e}")
+
 main()
