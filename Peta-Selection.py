@@ -1,4 +1,4 @@
-import streamlit as st
+    import streamlit as st
 import pandas as pd
 import folium
 import numpy as np
@@ -516,9 +516,7 @@ def main():
 
             with col1:
                 # CSV export
-                search_df['hp_petugas'] = search_df['hp_petugas'].astype(str).str.strip().apply(
-                    lambda x: x if x.startswith("0") else "0" + x if x.isdigit() else x
-                )
+                search_df['hp_petugas'] = "'" + search_df['hp_petugas'].astype(str)
                 csv = search_df.to_csv(index=False)
                 st.download_button(
                     label="⬇️ Download CSV",
