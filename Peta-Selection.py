@@ -498,33 +498,33 @@ def main():
             }
         )
         
-    # Export functionality
-    with st.expander("📥 Download Site Data"):
-        st.write("Choose your preferred export format:")
+        # Export functionality
+        with st.expander("📥 Download Site Data"):
+            st.write("Choose your preferred export format:")
 
-        col1, col2 = st.columns(2)
+            col1, col2 = st.columns(2)
 
-        with col1:
-            # CSV export
-            csv = search_df.to_csv(index=False)
-            st.download_button(
-                label="⬇️ Download CSV",
-                data=csv,
-                file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
-            )
+            with col1:
+                # CSV export
+                csv = search_df.to_csv(index=False)
+                st.download_button(
+                    label="⬇️ Download CSV",
+                    data=csv,
+                    file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv"
+                )
 
-        with col2:
-            # XLSX export
-            xls_buffer = io.BytesIO()
-            with pd.ExcelWriter(xls_buffer, engine='xlsxwriter') as writer:
-                search_df.to_excel(writer, index=False, sheet_name='Sites')
-            xls_buffer.seek(0)
+            with col2:
+                # XLSX export
+                xls_buffer = io.BytesIO()
+                with pd.ExcelWriter(xls_buffer, engine='xlsxwriter') as writer:
+                    search_df.to_excel(writer, index=False, sheet_name='Sites')
+                xls_buffer.seek(0)
 
-            st.download_button(
-                label="⬇️ Download XLSX",
-                data=xls_buffer,
-                file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                st.download_button(
+                    label="⬇️ Download XLSX",
+                    data=xls_buffer,
+                    file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 main()
