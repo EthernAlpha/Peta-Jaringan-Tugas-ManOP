@@ -372,7 +372,13 @@ def main():
 
         # Get selected site details
         selected_site = df[df['id_station'] == selected_id_station].iloc[0]
-        phone_str = selected_site['hp_petugas'] if pd.notna(selected_site['hp_petugas']) else 'N/A'
+        raw_phone = selected_site['hp_petugas']
+        if pd.notna(raw_phone):
+            phone_str = str(raw_phone).strip()
+            if phone_str.isdigit() and not phone_str.startswith("0"):
+                phone_str = "0" + phone_str
+        else:
+            phone_str = "N/A"
         
         col1, col2 = st.columns(2)
         
