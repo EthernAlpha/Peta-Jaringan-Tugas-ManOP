@@ -515,21 +515,15 @@ def main():
                 )
 
             with col2:
-                # XLSX export that retains original sheet structure
                 try:
-                    # Load original Excel file with all sheets
-                    original_xls = pd.read_excel('Metadata ALL - Sheet.xlsx', sheet_name=None)
+                    # Reload the original Excel with separate sheets (no merging)
+                    xls = pd.read_excel('Metadata ALL - Sheet.xlsx', sheet_name=None)
 
-                    # Optionally replace one sheet with filtered data
-                    # This assumes 'AAWS' corresponds to search_df, adjust key if needed
-                    original_xls['AAWS'] = search_df
-
-                    # Write all sheets into buffer
+                    # Write to BytesIO buffer preserving each sheet's own data
                     xls_buffer = io.BytesIO()
                     with pd.ExcelWriter(xls_buffer, engine='openpyxl') as writer:
-                        for sheet_name, df_sheet in original_xls.items():
-                            df_sheet.to_excel(writer, index=False, sheet_name=sheet_name)
-
+                        for sheet_name, sheet_df in xls.items():
+                            sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
                     xls_buffer.seek(0)
 
                     st.download_button(
