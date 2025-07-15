@@ -516,6 +516,9 @@ def main():
 
             with col1:
                 # CSV export
+                search_df['hp_petugas'] = search_df['hp_petugas'].astype(str).apply(
+                    lambda x: f"'{x.strip()}" if x.strip().isdigit() and not x.strip().startswith("0") else x
+                )
                 csv = search_df.to_csv(index=False)
                 st.download_button(
                     label="⬇️ Download CSV",
