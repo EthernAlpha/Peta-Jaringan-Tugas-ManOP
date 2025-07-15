@@ -32,7 +32,10 @@ def load_site_metadata():
         # --- Memuat Data ---
         file_path = 'Metadata ALL - Sheet.xlsx'
         xls = pd.ExcelFile(file_path)
-        sheets = pd.read_excel(file_path, sheet_name=None)
+        sheets = {
+            name: pd.read_excel(file_path, sheet_name=name, dtype={'hp_petugas': str})
+            for name in xls.sheet_names
+        }
 
         # Ambil dan gabungkan data dari semua sheet
         dfs = {
@@ -369,8 +372,7 @@ def main():
 
         # Get selected site details
         selected_site = df[df['id_station'] == selected_id_station].iloc[0]
-        raw_phone = selected_site.get('hp_petugas', '')
-        phone_str = str(int(raw_phone)).rjust(10, '0') if pd.notna(raw_phone) else 'N/A'
+        phone_str = selected_site['hp_petugas'] if pd.notna(selected_site['hp_petugas']) else 'N/A'
         
         col1, col2 = st.columns(2)
         
