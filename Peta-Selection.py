@@ -505,7 +505,7 @@ def main():
                 'elv_station': 'Ketinggian (m)',
                 'hp_petugas': 'No HP',
                 'instansi': 'Instansi',
-                'tgl_pasang_str': 'Installation Year',
+                'tgl_pasang_str': 'Installation Date',
                 'nama_vendor': 'Equipment Brand'
             }
         )
