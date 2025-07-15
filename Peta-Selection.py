@@ -389,6 +389,9 @@ def main():
             """)
         
         with col2:
+            phone_raw = selected_site.get("hp_petugas", "")
+            phone_str = str(phone_raw).strip() if pd.notna(phone_raw) else "N/A"
+            
             st.markdown(f"""
             ### 🌍 Geographic Details
             
@@ -401,7 +404,7 @@ def main():
             - **Agency:** {selected_site['instansi'] if pd.notna(selected_site['instansi']) else ''}
             - **Procurement Date:** {selected_site['tgl_pasang'].strftime("%m/%d/%Y")}
             - **Vendor:** {selected_site['nama_vendor']}            
-            - **Officer Phone Number:** {selected_site['hp_petugas']}   
+            - **Officer Phone Number:** {phone_str}   
             
             **Address:**
             {selected_site['addr_instansi'] if pd.notna(selected_site['addr_instansi']) else 'N/A'}
