@@ -517,12 +517,23 @@ def main():
             col1, col2 = st.columns(2)
 
             with col1:
-                # CSV export
-                search_df['hp_petugas'] = "'" + search_df['hp_petugas'].astype(str)
-                csv = search_df.to_csv(index=False)
+                st.markdown("**⬇️ Download as CSV**")
+
+                # Display helpful notice
+                st.markdown("""
+                <span style='color:gray; font-size: 12px;'>
+                ⚠️ If you're using Microsoft Excel, it may remove leading zeroes in phone numbers.<br>
+                To preserve formatting, open Excel first, go to <b>Data → Get Data → From Text/CSV</b>, then set the <i>Phone Number</i> column to <b>Text</b> during import.
+                </span>
+                """, unsafe_allow_html=True)
+
+                csv = search_df.copy()
+                csv['hp_petugas'] = csv['hp_petugas'].astype(str).str.strip()  # optional: ensure it's string
+                csv_data = csv.to_csv(index=False)
+
                 st.download_button(
-                    label="⬇️ Download CSV",
-                    data=csv,
+                    label="Download CSV",
+                    data=csv_data,
                     file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
                     mime="text/csv"
                 )
