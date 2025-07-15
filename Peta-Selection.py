@@ -521,7 +521,7 @@ def main():
                         xlsx_data = f.read()
 
                     st.download_button(
-                        label="⬇️ Download XLSX (Full Dataset)",
+                        label="⬇️ Download XLSX",
                         data=xlsx_data,
                         file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
