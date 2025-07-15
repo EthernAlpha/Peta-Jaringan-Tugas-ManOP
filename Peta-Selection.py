@@ -515,24 +515,18 @@ def main():
                 )
 
             with col2:
+                # XLSX export: Directly use the original file
                 try:
-                    # Reload the original Excel with separate sheets (no merging)
-                    xls = pd.read_excel('Metadata ALL - Sheet.xlsx', sheet_name=None)
-
-                    # Write to BytesIO buffer preserving each sheet's own data
-                    xls_buffer = io.BytesIO()
-                    with pd.ExcelWriter(xls_buffer, engine='openpyxl') as writer:
-                        for sheet_name, sheet_df in xls.items():
-                            sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    xls_buffer.seek(0)
+                    with open("Metadata ALL - Sheet.xlsx", "rb") as f:
+                        xlsx_data = f.read()
 
                     st.download_button(
-                        label="⬇️ Download XLSX",
-                        data=xls_buffer,
+                        label="⬇️ Download XLSX (Full Dataset)",
+                        data=xlsx_data,
                         file_name=f"Observation_Station_Data_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
-                except Exception as e:
-                    st.error(f"❌ Failed to generate Excel file: {e}")
+                except FileNotFoundError:
+                    st.error("❌ The original Excel file was not found.")
 
 main()
