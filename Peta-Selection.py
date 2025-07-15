@@ -369,6 +369,8 @@ def main():
 
         # Get selected site details
         selected_site = df[df['id_station'] == selected_id_station].iloc[0]
+        phone_raw = selected_site.get("hp_petugas", "")
+        phone_str = str(phone_raw).strip() if pd.notna(phone_raw) else "N/A"
         
         col1, col2 = st.columns(2)
         
@@ -388,10 +390,7 @@ def main():
             - **Village:** {selected_site['kelurahan']}
             """)
         
-        with col2:
-            phone_raw = selected_site.get("hp_petugas", "")
-            phone_str = str(phone_raw).strip() if pd.notna(phone_raw) else "N/A"
-            
+        with col2:         
             st.markdown(f"""
             ### 🌍 Geographic Details
             
