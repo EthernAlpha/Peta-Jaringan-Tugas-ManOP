@@ -54,6 +54,12 @@ def load_site_metadata():
         st.error(f"Error loading site metadata: {str(e)}")
         return None
 
+def safe_format_elevation(value):
+    try:
+        return f"{float(value):.3f}"
+    except (ValueError, TypeError):
+        return "N/A"
+
 def create_clustered_map(df, selected_station_type='AAWS'):
     """Create a clustered map with individual markers color-coded by province using unique hex colors."""
 
@@ -93,7 +99,7 @@ def create_clustered_map(df, selected_station_type='AAWS'):
                 <b>Province:</b> {site['nama_propinsi']}<br>
                 <b>District:</b> {site['nama_kota']}<br>
                 <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
-                <b>Elevation:</b> {f"{site['elv_station']:.3f}" if pd.notna(site['elv_station']) else 'N/A'} m <br>
+                <b>Elevation:</b> {safe_format_elevation(site['elv_station'])} m <br>
                 <b>Installation Year:</b> {site['tgl_pasang'].strftime("%m/%d/%Y") if pd.notna(site['tgl_pasang']) else 'N/A'}<br>
                 <b>Equipment:</b> {site['nama_vendor'] if pd.notna(site['nama_vendor']) else 'N/A'}<br>
                 <b>Address:</b> {site['addr_instansi'] if pd.notna(site['addr_instansi']) else 'N/A'}
@@ -163,7 +169,7 @@ def create_selective_map(df, selected_station_type='AAWS', selected_id_station='
             <b>Province:</b> {site.get('nama_propinsi', 'N/A')}<br>
             <b>District:</b> {site.get('nama_kota', 'N/A')}<br>
             <b>Coordinates:</b> {site['latt_station']:.3f}, {site['long_station']:.3f}<br>
-            <b>Elevation:</b> {f"{site['elv_station']:.3f}" if pd.notna(site['elv_station']) else 'N/A'} m <br>
+            <b>Elevation:</b> {safe_format_elevation(site['elv_station'])} m <br>
             <b>Installation Year:</b> {install_date}<br>
             <b>Equipment:</b> {site.get('nama_vendor', 'N/A')}<br>
             <b>Address:</b> {site.get('addr_instansi', 'N/A')}
